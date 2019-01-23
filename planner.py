@@ -52,9 +52,11 @@ def planner(problem, heuristic=None, state0=None, goal=None,
             closed.add(node)
 
             # Apply all applicable actions to get successors
-            successors = set(node.apply(action, monotone)
-                             for action in problem.problem.grounded_actions
-                             if node.is_true(action.preconditions))
+            successors = []
+            for action in problem.problem.grounded_actions:
+                if node.is_true(action.preconditions):
+                    successors.append(node.apply(action, monotone))
+            successors = set(successors)
 
             # Compute heuristic and add to fringe
             for successor in successors:
@@ -75,23 +77,3 @@ def plan_cost(plan):
         return float('inf')
     else:
         return len(plan)
-
-def monotone_heuristic(problem):
-    """Heuristic that finds plans using only add lists of actions"""
-    def h(state):
-        monotone_plan = planner(problem, null_heuristic, state, monotone=True, verbose=False)
-        return plan_cost(monotone_plan)
-    return h
-
-def subgoal_heuristic(problem):
-    """Heuristic that computes the max cost of plans across all subgoals"""
-    def h(state):
-        costs = []
-        for g in problem.goals:
-            subgoal_plan = planner(problem, null_heuristic, state, ((g,), ()))
-            costs.append(plan_cost(subgoal_plan))
-        for g in problem.num_goals:
-            subgoal_plan = planner(problem, null_heuristic, state, ((), (g,)))
-            costs.append(plan_cost(subgoal_plan))
-        return max(costs)
-    return h

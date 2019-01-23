@@ -15,6 +15,6 @@ if __name__ == "__main__":
     domain = "./PDDL/domain_2.pddl"   #contains init and goal states
     problem = "./PDDL/problem2.pddl"       #contains problme description
     parser = PDDL_Parser(domain_file = domain, problem_file = problem)
-    plan = planner(parser,verbose=True)
-    for action in plan:
-        print(action)
+    # plan = planner(parser,verbose=True)
+    # for action in plan:
+    #     print(action)

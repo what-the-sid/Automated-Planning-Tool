@@ -12,12 +12,12 @@ NUM_OPS = {
     '>=': ops.ge,
     '<=': ops.le
 }
-
+#negative effects
 def neg(effect):
     """
     Makes the given effect a negative (delete) effect, like 'not' in PDDL.
     """
-    return (-1, effect)
+    return (-1, effect) #(-1,(a,b))
 def _grounder(arg_names, args):
     """
     Returns a function for grounding predicates and function symbols
@@ -53,7 +53,7 @@ class Domain(object):
         grounded_actions = list()
         for action in self.actions:
             param_lists = [objects[t] for t in action.types]
-            param_combos = set()
+            param_combos = set() # { (1,a),(2,b) }
             for params in product(*param_lists):
                 param_set = frozenset(params)
                 if action.unique and len(param_set) != len(params):
@@ -68,9 +68,11 @@ class Action(object):
     def __init__(self, name, parameters=(), preconditions=(),add_effects=(),del_effects=(),
                  unique=True, no_permute=False):
         self.name = name
+        #if parameters:
         if len(parameters) > 0:
-            self.types = ['objects']*len(parameters)
-            self.arg_names = tuple(parameters)
+            # assigning Object types and parameters
+            self.types = ['objects']*len(parameters) #['object','object']....
+            self.arg_names = tuple(parameters) #[?x,?y,?z]....
         else:
             self.types = tuple()
             self.arg_names = tuple()
@@ -129,6 +131,8 @@ class _GroundedAction(object):
             else:
                 self.add_effects.append(ground(effect))
 
+        print("Action:%s\nAdd_effects:%s\nDel_effects:%s\n\n"%(self.sig,self.add_effects,self.del_effects))
+
         self.act_result = {self.sig:{"precondtions":self.preconditions,"add_effects":self.add_effects,"del_effects":self.del_effects}}
 
     def __str__(self):
@@ -150,6 +154,8 @@ class State(object):
         predicates = [tuple(i) for i in predicates]
         if set(predicates).issubset(set(self.predicates)) == True:
             return True
+        else:
+            return False
 
     def apply(self, action, monotone=False):
         """
@@ -229,9 +235,10 @@ class PDDL_Parser():
     def __init__(self,domain_file = None,problem_file = None):
         if domain_file == None or problem_file == None:
             raise ValueError("Please input domain/problem pddl file")
-        self.parse_domain(domain_file)
-        self.parse_problem(problem_file)
+        self.parse_domain(domain_file) #parse domain file
+        self.parse_problem(problem_file) #parse problem file
 
+    #scan the tokens and its values from file
     def scan_tokens(self, filename):
         '''
         Scan the entire PDDL file and store in the form of list
@@ -279,6 +286,7 @@ class PDDL_Parser():
                 elif t == ':predicates':
                     pass # TODO
                 elif t == ':action':
+                    # if token finds 'action' variable,parse action
                     self.parse_action(group)
                 else: print(str(t) + ' is not recognized in domain')
             self.domain = Domain(actions=self.actions,name=self.domain_name)
@@ -310,6 +318,7 @@ class PDDL_Parser():
             else: print(str(t) + ' is not recognized in action')
         self.actions.append(Action(name, parameters, positive_preconditions, add_effects, del_effects))
 
+#Split the token values as list
     def split_propositions(self, group, pos, neg, name, part):
         if not type(group) is list:
             raise Exception('Error with ' + name + part)
@@ -324,6 +333,7 @@ class PDDL_Parser():
                 neg.append(proposition[-1])
             else:
                 pos.append(proposition)
+
     def parse_problem(self, problem_file):
         tokens = self.scan_tokens(problem_file)
         if type(tokens) is list and tokens.pop(0) == 'define':
@@ -351,4 +361,5 @@ class PDDL_Parser():
                 elif t == ':goal':
                     self.split_propositions(group[1], self.positive_goals, self.negative_goals, '', 'goals')
                 else: print(str(t) + ' is not recognized in problem')
+            #Initialize problem as an object
             self.problem = Problem(self.domain,{'objects':self.objects},init=self.state, goal= self.positive_goals+self.negative_goals)
